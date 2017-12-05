@@ -63,3 +63,7 @@ def main():
         print('Following user: {username}'.format(username=username))
         follow(driver, username)
         time.sleep(random.randint(int(settings['Mintime']), int(settings['Maxtime'])))
+
+
+if __name__=='__main__':
+    main()
