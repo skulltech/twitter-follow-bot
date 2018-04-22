@@ -54,8 +54,6 @@ def follow(driver, username):
 
 
 def main():
-    driver = webdriver.Chrome()
-
     while True:
         filename = input('[*] The filename of the csv: ') or 'input.csv'
         try:
@@ -80,6 +78,7 @@ def main():
     except KeyError:
         settings['PASSWORD'] = getpass('[*] Twitter Password for {}: '.format(settings['USERNAME']))
 
+    driver = webdriver.Chrome()
     if not login(driver, settings):
         print('[*] Could not login to Twitter. Check your credentials.')
         return
