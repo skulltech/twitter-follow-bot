@@ -2,6 +2,7 @@ import csv
 import random
 import time
 from configparser import ConfigParser
+from getpass import getpass
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -51,6 +52,7 @@ def follow(driver, username):
     elif 'Follow' in follow.text:
         follow.click()
 
+
 def main():
     driver = webdriver.Chrome()
 
@@ -69,6 +71,15 @@ def main():
     config_file.read('config.ini')
     settings = config_file['SETTINGS']
 
+    try:
+        settings['USERNAME']
+    except KeyError:
+        settings['USERNAME'] = input('[*] Twitter Username: ')
+    try:
+        settings['PASSWORD']
+    except KeyError:
+        settings['PASSWORD'] = getpass('[*] Twitter Password for {}: '.format(settings['USERNAME']))
+
     if not login(driver, settings):
         print('[*] Could not login to Twitter. Check your credentials.')
         return
@@ -79,7 +90,7 @@ def main():
             time.sleep(random.randint(int(settings['Mintime']), int(settings['Maxtime'])))
         else:
             first = False
-            
+
         print('[*] Following user: {username}... '.format(username=username), end='')
         follow(driver, username)
         print('Done!')

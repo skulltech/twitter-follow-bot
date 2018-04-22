@@ -17,6 +17,7 @@ Make sure that the input csv file is in the same directory as of the script and 
 ```console
 $ python3 twitter-bot.py 
 [*] The filename of the csv: input.csv
+[*] Twitter Password for SkullTech101: 
 [*] Following user: defcon... Done!
 [*] Following user: github... Done!
 [*] Following user: SkullTech101... Done!
