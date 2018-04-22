@@ -7,6 +7,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import ElementNotVisibleException
+
 
 
 def read_usernames(filename):
@@ -19,15 +21,24 @@ def read_usernames(filename):
 
 
 def login(driver, settings):
-    driver.get('https://twitter.com/')
-    driver.find_element_by_class_name('StreamsLogin').click()
+    driver.get('https://twitter.com/login')
 
-    username = driver.find_element_by_name('session[username_or_email]')
-    username.send_keys(settings['Username'])
-    password = driver.find_element_by_name('session[password]')
-    password.send_keys(settings['Password'])
+    login_forms = driver.find_elements_by_name('session[username_or_email]')
+    for idx, username in enumerate(login_forms):
+        try:
+            username.send_keys(settings['Username'])
+        except ElementNotVisibleException:
+            continue
+        else:
+            password = driver.find_elements_by_name('session[password]')[idx]
+            password.send_keys(settings['Password'])
+            username.submit()
+            break
 
-    username.submit()
+    if 'Login on Twitter' in driver.title:
+        return False
+    else:
+        return True
 
 
 def follow(driver, username):
@@ -44,11 +55,11 @@ def main():
     driver = webdriver.Chrome()
 
     while True:
-        filename = input('[?] The filename of the csv: ')
+        filename = input('[*] The filename of the csv: ') or 'input.csv'
         try:
             usernames = read_usernames(filename)
         except FileNotFoundError:
-            print('[!] File not found! Try again...')
+            print('[*] File not found! Try again...')
             continue
         else:
             break
@@ -58,12 +69,21 @@ def main():
     config_file.read('config.ini')
     settings = config_file['SETTINGS']
 
-    login(driver, settings)
-    for username in usernames:
-        print('Following user: {username}'.format(username=username))
-        follow(driver, username)
-        time.sleep(random.randint(int(settings['Mintime']), int(settings['Maxtime'])))
+    if not login(driver, settings):
+        print('[*] Could not login to Twitter. Check your credentials.')
+        return
 
+    first = True
+    for username in usernames:
+        if not first:
+            time.sleep(random.randint(int(settings['Mintime']), int(settings['Maxtime'])))
+        else:
+            first = False
+            
+        print('[*] Following user: {username}... '.format(username=username), end='')
+        follow(driver, username)
+        print('Done!')
+        
 
 if __name__=='__main__':
     main()

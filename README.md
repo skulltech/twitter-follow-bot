@@ -3,8 +3,7 @@ A tool for automatically following a bunch of Twitter accounts
 
 ## Installation:
 
-Install Python 3: https://www.python.org/downloads/  
-Install Selenium: `pip install selenium`
+Requires Python 3.x. Only required library is _Selenium_, install it as `pip3 install selenium`.
 
 ## Set up:
 
@@ -13,10 +12,12 @@ All the handles of the Twitter accounts to be followed must be in a _CSV_ file i
 
 ## Running the script:
 
-Make sure that the input csv file is in the same directory as of the script and the `config.ini` file. Then run the script from command-line like the following  
-```terminal
-sumit@HAL9000:~/Documents/twitter-follow-bot$ python3 twitter-bot.py 
-[?] The filename of the csv: input.csv
-Following user: defcon
-Following user: github
+Make sure that the input csv file is in the same directory as of the script and the `config.ini` file. Then run the script from command-line like the following
+
+```console
+$ python3 twitter-bot.py 
+[*] The filename of the csv: input.csv
+[*] Following user: defcon... Done!
+[*] Following user: github... Done!
+[*] Following user: SkullTech101... Done!
 ```
