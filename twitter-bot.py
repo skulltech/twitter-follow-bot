@@ -5,36 +5,29 @@ from configparser import ConfigParser
 from getpass import getpass
 
 from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import ElementNotVisibleException
+from selenium.webdriver.support.ui import WebDriverWait
 
 
-
-def read_usernames(filename):
-    usernames = []
-    with open(filename) as csvfile:
-        reader = csv.reader(csvfile)
+def read_handles(filename):
+    handles = []
+    with open(filename) as f:
+        reader = csv.reader(f)
         for row in reader:
-            usernames.append(row[0])
-    return usernames
+            handles.append(row[0])
+    return handles
 
 
-def login(driver, settings):
+def login(driver, username, password):
     driver.get('https://twitter.com/login')
 
-    login_forms = driver.find_elements_by_name('session[username_or_email]')
-    for idx, username in enumerate(login_forms):
-        try:
-            username.send_keys(settings['Username'])
-        except ElementNotVisibleException:
-            continue
-        else:
-            password = driver.find_elements_by_name('session[password]')[idx]
-            password.send_keys(settings['Password'])
-            username.submit()
-            break
+    username_element = driver.find_elements_by_name('session[username_or_email]')[0]
+    username_element.send_keys(username)
+    password_element = driver.find_elements_by_name('session[password]')[0]
+    password_element.send_keys(password)
+    username_element.submit()
 
     if 'Login on Twitter' in driver.title:
         return False
@@ -42,58 +35,52 @@ def login(driver, settings):
         return True
 
 
-def follow(driver, username):
-    driver.get('https://twitter.com/' + username)
-    wait = WebDriverWait(driver, 10)
-    follow = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, 'follow-button')))
-    
-    if 'Following' in follow.text:
+def follow(driver, handle):
+    driver.get('https://twitter.com/' + handle)
+    time.sleep(3)
+    image = WebDriverWait(driver, 10).until(
+        EC.presence_of_element_located((By.XPATH, '//img[contains(@src, "https://pbs.twimg.com/profile_banners/")]')))
+    user_id = image.get_attribute('src').split('/')[4]
+    try:
+        follow = driver.find_element_by_xpath(f'//div[@data-testid="{user_id}-follow"]')
+    except NoSuchElementException:
         return
-    elif 'Follow' in follow.text:
+    else:
         follow.click()
 
 
 def main():
-    while True:
-        filename = input('[*] The filename of the csv: ') or 'input.csv'
-        try:
-            usernames = read_usernames(filename)
-        except FileNotFoundError:
-            print('[*] File not found! Try again...')
-            continue
-        else:
-            break
+    filename = input('[?] The filename of the csv: ') or 'input.csv'
+    try:
+        handles = read_handles(filename)
+    except FileNotFoundError:
+        print('[?] File not found! Try again...')
+        return
 
-    urls = ['https://twitter.com/' + username for username in usernames]
     config_file = ConfigParser()
     config_file.read('config.ini')
     settings = config_file['SETTINGS']
 
     try:
-        settings['USERNAME']
+        username = settings['Username']
     except KeyError:
-        settings['USERNAME'] = input('[*] Twitter Username: ')
+        username = input('[?] Twitter Username: ')
     try:
-        settings['PASSWORD']
+        password = settings['Password']
     except KeyError:
-        settings['PASSWORD'] = getpass('[*] Twitter Password for {}: '.format(settings['USERNAME']))
+        password = getpass('[?] Twitter Password for {}: '.format(settings['USERNAME']))
 
     driver = webdriver.Chrome()
-    if not login(driver, settings):
+    if not login(driver, username, password):
         print('[*] Could not login to Twitter. Check your credentials.')
         return
 
-    first = True
-    for username in usernames:
-        if not first:
-            time.sleep(random.randint(int(settings['Mintime']), int(settings['Maxtime'])))
-        else:
-            first = False
-
-        print('[*] Following user: {username}... '.format(username=username), end='')
-        follow(driver, username)
+    for handle in handles:
+        print('[*] Following user: {username}... '.format(username=handle), end='')
+        follow(driver, handle)
+        time.sleep(random.randint(int(settings['Mintime']), int(settings['Maxtime'])))
         print('Done!')
-        
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     main()
